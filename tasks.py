@@ -18,7 +18,7 @@ def setup(container='dbpedia-tutorial'):
 
 @task
 def setup_fuse(container='dbpedia-tutorial'):
-    run('docker run -dp 8000:8000 --name %s docker.qsensei.com/fuse' % (
+    run('docker run -dp 8000:8000 --name %s docker.qsensei.com/fuse-free' % (
         container))
     time.sleep(10)
     setup_instance()
