@@ -1,2 +1,3 @@
-wikipedia-tutorial
-------------------
+dbpedia-tutorial
+----------------
+
