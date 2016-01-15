@@ -1,0 +1,16 @@
+{
+  "types": [
+    {
+      "id": "person",
+      "label": "Person",
+      "attributes": [
+        {"name": "name", "type": "str"},
+        {"name": "birth", "type": "date"},
+        {"name": "death", "type": "date"},
+        {"name": "description", "type": "str"},
+        {"name": "occupation", "type": "str", "multi": true},
+        {"name": "url", "type": "str"}
+      ]
+    }
+  ]
+}

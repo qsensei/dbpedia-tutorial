@@ -1,0 +1,24 @@
+{
+  "components": [],
+  "defaults": {
+    "results_sorting": [{"index": "birth", "direction": "desc"}],
+    "limit": 5,
+    "fulltext_index": "tx"
+  },
+  "indexes": [
+    {"name": "tx", "type": "text"},
+    {"name": "type"},
+    {"name": "occupation"},
+    {"name": "name"},
+    {"name": "birth"},
+    {"name": "death"}
+  ],
+  "sources": [
+    {"contenttype": "person", "index": "type", "attribute": "fuse:type"},
+    {"contenttype": "person", "index": "name", "attribute": "name"},
+    {"contenttype": "person", "index": "birth", "attribute": "birth"},
+    {"contenttype": "person", "index": "death", "attribute": "death"},
+    {"contenttype": "person", "index": "occupation", "attribute": "occupation"},
+    {"contenttype": "person", "index": "tx", "attribute": "description"}
+  ]
+}

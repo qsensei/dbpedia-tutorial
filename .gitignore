@@ -1,0 +1,5 @@
+/bin/
+/develop-eggs/
+/eggs/
+/fuse_wiki.egg-info/
+/.installed.cfg
