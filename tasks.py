@@ -13,7 +13,10 @@ import requests
 @task
 def setup(container='dbpedia-tutorial'):
     setup_fuse(container)
-    run('bin/python scripts/uploadpeople.py')
+    run('bin/python scripts/upload_football.py')
+    run('bin/python scripts/upload_baseball.py')
+    run('bin/python scripts/upload_basketball.py')
+    run('bin/python scripts/upload_teams.py')
 
 
 @task
@@ -23,6 +26,14 @@ def setup_fuse(container='dbpedia-tutorial'):
     time.sleep(10)
     setup_instance()
     start_instance()
+
+
+@task
+def reload_schema():
+    stop_instance()
+    setup_instance()
+    start_instance()
+    reindex()
 
 
 def setup_instance():
@@ -50,6 +61,24 @@ def start_instance():
     time.sleep(5)
 
 
+def stop_instance():
+    server_address = _get_server_address()
+    res = requests.post(
+        'http://%s:8000/api/admin/instance' % server_address,
+        json={'action': 'stop'})
+    res.raise_for_status()
+    time.sleep(5)
+
+
+@task
+def reindex():
+    server_address = _get_server_address()
+    res = requests.post(
+        'http://%s:8000/api/tasks/types/index' % server_address
+    )
+    res.raise_for_status()
+
+
 @task
 def teardown(container='dbpedia-tutorial'):
     run('docker rm -fv %s' % container)
@@ -67,6 +96,8 @@ def fuse_schema():
     with tempfile.TemporaryFile() as f:
         with zipfile.ZipFile(f, 'w') as z:
             for fn in glob('schema/*.json'):
+                z.write(fn, os.path.basename(fn))
+            for fn in glob('schema/*.py'):
                 z.write(fn, os.path.basename(fn))
         f.flush()
         f.seek(0)
