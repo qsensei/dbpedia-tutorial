@@ -16,14 +16,12 @@ def setup(container='dbpedia-tutorial'):
     run('bin/python scripts/upload_football.py')
     run('bin/python scripts/upload_baseball.py')
     run('bin/python scripts/upload_basketball.py')
-    run('bin/python scripts/upload_teams.py')
 
 
 @task
 def setup_fuse(container='dbpedia-tutorial'):
     run('docker run -dp 8000:8000 --name %s docker.qsensei.com/fuse-free' % (
         container))
-    time.sleep(10)
     setup_instance()
     start_instance()
 
@@ -37,10 +35,11 @@ def reload_schema():
 
 
 def setup_instance():
-    server_address = _get_server_address()
+    wait_for_container_ready()
+    host = _get_server_host()
     with fuse_schema() as z:
         res = requests.put(
-            'http://%s:8000/api/admin/instance' % server_address,
+            'http://%s:8000/api/admin/instance' % host,
             headers={'content-type': 'application/zip'},
             data=z)
         if res.status_code == 200:
@@ -53,28 +52,66 @@ def setup_instance():
 
 
 def start_instance():
-    server_address = _get_server_address()
+    host = _get_server_host()
     res = requests.post(
-        'http://%s:8000/api/admin/instance' % server_address,
+        'http://%s:8000/api/admin/instance' % host,
         json={'action': 'start'})
     res.raise_for_status()
-    time.sleep(5)
+    wait_for_ready()
 
 
 def stop_instance():
-    server_address = _get_server_address()
+    host = _get_server_host()
     res = requests.post(
-        'http://%s:8000/api/admin/instance' % server_address,
+        'http://%s:8000/api/admin/instance' % host,
         json={'action': 'stop'})
     res.raise_for_status()
-    time.sleep(5)
+    wait_for_stopped()
+
+
+def wait_for_container_ready():
+    url = 'http://%s:8000/api/admin/instance' % _get_server_host()
+    for _ in xrange(20):
+        try:
+            res = requests.get(url)
+            if res.status_code == 200:
+                return
+        except KeyboardInterrupt:
+            raise
+        except requests.ConnectionError:
+            time.sleep(0.5)
+    raise RuntimeError('Timeout waiting for container to start.')
+
+
+def wait_for_ready():
+    host = _get_server_host()
+    for _ in xrange(10):
+        res = requests.get(
+            'http://%s:8000/api/admin/instance' % host)
+        res.raise_for_status()
+        if res.json()['ready']:
+            return
+        time.sleep(0.5)
+    raise RuntimeError('Timeout while waiting for Fuse to be ready.')
+
+
+def wait_for_stopped():
+    host = _get_server_host()
+    for _ in xrange(10):
+        res = requests.get(
+            'http://%s:8000/api/admin/instance' % host)
+        res.raise_for_status()
+        if res.json()['status'] == 'stopped':
+            return
+        time.sleep(0.5)
+    raise RuntimeError('Timeout while waiting for Fuse to stop.')
 
 
 @task
 def reindex():
-    server_address = _get_server_address()
+    host = _get_server_host()
     res = requests.post(
-        'http://%s:8000/api/tasks/types/index' % server_address
+        'http://%s:8000/api/tasks/types/index' % host
     )
     res.raise_for_status()
 
@@ -84,7 +121,7 @@ def teardown(container='dbpedia-tutorial'):
     run('docker rm -fv %s' % container)
 
 
-def _get_server_address():
+def _get_server_host():
     docker_host = os.environ.get('DOCKER_HOST')
     if docker_host:
         return urlparse(docker_host).hostname

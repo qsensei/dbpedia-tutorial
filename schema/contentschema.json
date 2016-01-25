@@ -16,19 +16,6 @@
         {"name": "birth_place", "type": "str", "multi": true},
         {"name": "url", "type": "str"}
       ]
-    },
-    {
-      "id": "team",
-      "label": "Team",
-      "attributes": [
-        {"name": "name", "type": "str"},
-        {"name": "url", "type": "str"},
-        {"name": "sport", "type": "str"},
-        {"name": "description", "type": "str", "multi": true},
-        {"name": "city", "type": "str", "multi": true},
-        {"name": "players", "type": "str", "multi": true}
-      ]
     }
-
   ]
 }

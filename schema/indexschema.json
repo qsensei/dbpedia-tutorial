@@ -34,32 +34,16 @@
     {"index": "tx", "contenttype": "athlete", "attribute": "high_school"},
     {"index": "tx", "contenttype": "athlete", "attribute": "birth_place"},
     {"index": "tx", "contenttype": "athlete", "attribute": "url"},
-    {"index": "tx", "contenttype": "team", "attribute": "name"},
-    {"index": "tx", "contenttype": "team", "attribute": "url"},
-    {"index": "tx", "contenttype": "team", "attribute": "sport"},
-    {"index": "tx", "contenttype": "team", "attribute": "description"},
-    {"index": "tx", "contenttype": "team", "attribute": "city"},
-    {"index": "tx", "contenttype": "team", "attribute": "players"},
 
-    {"index": "type", "attribute": "fuse:type", "contenttype": "athlete", "transformers": ["capitalize"]},
-    {"index": "type", "attribute": "fuse:type", "contenttype": "team", "transformers": ["capitalize"]},
-
-    {"index": "team", "contenttype": "athlete", "attribute": "team"},
-    {"index": "team", "contenttype": "team", "attribute": "name"},
-
-    {"index": "sport", "contenttype": "athlete", "attribute": "sport"},
-    {"index": "sport", "contenttype": "team", "attribute": "sport"},
-
+    {"index": "birth_place", "contenttype": "athlete", "attribute": "birth_place"},
+    {"index": "birth_year", "contenttype": "athlete", "attribute": "birth_date", "transformers": ["to_year"]},
+    {"index": "college", "contenttype": "athlete", "attribute": "college"},
+    {"index": "draft_year", "contenttype": "athlete", "attribute": "draft_year"},
+    {"index": "high_school", "contenttype": "athlete", "attribute": "high_school"},
     {"index": "player", "contenttype": "athlete", "attribute": "name"},
-    {"index": "player", "contenttype": "team", "attribute": "players"},
-
-    {"contenttype": "athlete", "index": "birth_year", "attribute": "birth_date", "transformers": ["to_year"]},
-    {"contenttype": "athlete", "index": "birth_place", "attribute": "birth_place"},
-    {"contenttype": "athlete", "index": "position", "attribute": "position"},
-    {"contenttype": "athlete", "index": "draft_year", "attribute": "draft_year"},
-    {"contenttype": "athlete", "index": "college", "attribute": "college"},
-    {"contenttype": "athlete", "index": "high_school", "attribute": "high_school"},
-
-    {"contenttype": "team", "index": "location", "attribute": "city"}
+    {"index": "position", "contenttype": "athlete", "attribute": "position"},
+    {"index": "sport", "contenttype": "athlete", "attribute": "sport"},
+    {"index": "team", "contenttype": "athlete", "attribute": "team"},
+    {"index": "type", "attribute": "fuse:type", "contenttype": "athlete", "transformers": ["capitalize"]}
   ]
 }
