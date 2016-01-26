@@ -7,25 +7,61 @@ client = SPARQLWrapper("http://dbpedia.org/sparql")
 client.setQuery('''
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX : <http://dbpedia.org/resource/>
-SELECT DISTINCT ?name ?birth ?death ?occupationName ?description_en ?person
+SELECT DISTINCT
+    ?person
+    ?name
+    ?description
+    ?url
+    ?teamName as ?team
+    ?positionName as ?position
+    ?birthDate as ?birth_date
+    ?draftYear as ?draft_year
+    ?collegeName as ?college
+    ?highSchoolName as ?high_school
+    ?birthPlaceName as ?birth_place
 WHERE {
-  ?person dbo:birthPlace :Germany .
-  ?person dbo:birthName ?name .
-  ?person dbo:birthDate ?birth .
-  ?person dbo:deathDate ?death .
-  ?person rdfs:comment ?description_en .
+  ?person rdf:type dbo:AmericanFootballPlayer ;
+          dbo:team _:team ;
+          foaf:name ?name ;
+          foaf:isPrimaryTopicOf ?url .
+
+  _:team rdf:type yago:NationalFootballLeagueTeams .
+  _:team rdfs:label ?teamName .
+  FILTER (LANG(?teamName) = 'en')
 
   OPTIONAL {
-    ?person dbo:occupation ?occupation .
-    ?occupation rdfs:label ?occupationName .
-    FILTER (LANG(?occupationName) = 'en') .
+    ?person rdfs:comment ?description .
+    FILTER (LANG(?description) = 'en')
   }
-
-  FILTER (LANG(?description_en) = 'en') .
-  FILTER (DATATYPE(?birth) = xsd:date) .
-  FILTER (DATATYPE(?death) = xsd:date) .
-} ORDER BY ?name OFFSET 0 LIMIT 3
+  OPTIONAL {
+    ?person dbo:position _:position .
+    _:position rdfs:label ?positionName .
+    FILTER (LANG(?positionName) = 'en')
+  }
+  OPTIONAL {
+    ?person dbo:birthDate ?birthDate .
+    FILTER (DATATYPE(?birthDate) = xsd:date)
+  }
+  OPTIONAL {
+    ?person dbo:draftYear ?draftYear .
+  }
+  OPTIONAL {
+    ?person dbp:college _:college .
+    _:college rdfs:label ?collegeName .
+    FILTER(LANG(?collegeName) = 'en')
+  }
+  OPTIONAL {
+    ?person dbp:highschool _:highschool .
+    _:highschool rdfs:label ?highSchoolName .
+    FILTER(LANG(?highSchoolName) = 'en')
+  }
+  OPTIONAL {
+    ?person dbo:birthPlace _:birthPlace .
+    _:birthPlace dbo:country _:birthCountry .
+    _:birthCountry rdfs:label ?birthPlaceName .
+    FILTER(LANG(?birthPlaceName) = 'en')
+  }
+} OFFSET 0 LIMIT 3
 ''')
 client.setReturnFormat(JSON)
 results = client.query().convert()

@@ -1,0 +1,25 @@
+language: python
+python:
+- '2.7'
+services:
+- docker
+addons:
+  apt:
+    packages:
+      - firefox
+      - xvfb
+      - x11-xkb-utils
+      - xfonts-100dpi
+      - xfonts-75dpi
+      - xfonts-scalable
+      - xfonts-cyrillic
+before_install:
+- docker login -u '$token' -p "$DOCKER_PASSWORD" -e 'none' docker.qsensei.com
+- docker pull docker.qsensei.com/fuse-free:latest
+- python bootstrap.py
+- bin/buildout -c buildout-dev.cfg
+script:
+- bin/nosetests tests/
+env:
+  global:
+    secure: w2GW4OLsnimnpO5f2NKmuiuMAvsD/g7HeVCKXnPFaW9hRC/2txNAHOqDZpVVDFmPrUq5gAjc/DUrRXZ0UrmAO1b5/QXYdvN0esMSElbBWXSfrZCKCrw5bT6vTJ9N7DvEllLyw7GkDi8X/dUVSi27e2fZEGo2tB+uzV3CPXECEmHE6MKg7SPvd2ReMuHKEIHSThnBgwLLauxdViyNUQUkBLkmtGlpzaIIi36CAtx3Hl9SFL9bQq0thTkEvV4P68SJ3mZMU2m7RM+0q8SGdPXrqyiT7EwZN3M3LA9LW7Q9aVBe7etOhNPiM0B0piKgE6YDjuPJhEZP974lYJFlOr03eHKvOf6YZBpy50+TtSvTpCDLQ8Lds9WlS4QKeQ4uNBzRaXWkucAbFrHLvgYpG2rdLUWfx/+KP1mJpK7LvN6IxUCN2H2Fh/r8WmkTcTXpYOcKLgmGwsCqnzxfV2kRbIEkY++v2GNM8N7MFPdu1jvOXttQE+7xNoIRhe4FuBpzkdHG986JsGBkovTWz1KtSDJtupxnK6Nh3KUoHO2qjL+Qz/zLaLEwTJWmIraGRYtvq4rs+DisPh5RNULVi9E905rrVV4rdrJYcJs8EVxkv1clLxQq0dgDUXVd0YfzzOXGP9umC669VOl1vL73D+RBTiP3jispwXezdIZGeWMXvb85FEg=

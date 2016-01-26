@@ -1,24 +1,49 @@
 {
-  "components": [],
+  "components": [
+    {"type": "transformer", "name": "to_year", "component": "customtransformers.to_year"},
+    {"type": "transformer", "name": "capitalize", "component": "qc.index.transform.capitalize"}
+  ],
   "defaults": {
-    "results_sorting": [{"index": "birth", "direction": "desc"}],
+    "results_sorting": [{"index": "player", "direction": "asc"}],
     "limit": 5,
     "fulltext_index": "tx"
   },
   "indexes": [
-    {"name": "tx", "type": "text"},
+    {"name": "tx", "label": "Fulltext", "type": "text"},
     {"name": "type"},
-    {"name": "occupation"},
-    {"name": "name"},
-    {"name": "birth"},
-    {"name": "death"}
+    {"name": "team"},
+    {"name": "sport"},
+    {"name": "position"},
+    {"name": "player"},
+    {"name": "birth_year"},
+    {"name": "birth_place"},
+    {"name": "college"},
+    {"name": "location"},
+    {"name": "high_school", "label": "High School"},
+    {"name": "draft_year", "label": "Draft Year"}
   ],
   "sources": [
-    {"contenttype": "person", "index": "type", "attribute": "fuse:type"},
-    {"contenttype": "person", "index": "name", "attribute": "name"},
-    {"contenttype": "person", "index": "birth", "attribute": "birth"},
-    {"contenttype": "person", "index": "death", "attribute": "death"},
-    {"contenttype": "person", "index": "occupation", "attribute": "occupation"},
-    {"contenttype": "person", "index": "tx", "attribute": "description"}
+    {"index": "tx", "contenttype": "athlete", "attribute": "name"},
+    {"index": "tx", "contenttype": "athlete", "attribute": "birth_date"},
+    {"index": "tx", "contenttype": "athlete", "attribute": "sport"},
+    {"index": "tx", "contenttype": "athlete", "attribute": "description"},
+    {"index": "tx", "contenttype": "athlete", "attribute": "team"},
+    {"index": "tx", "contenttype": "athlete", "attribute": "position"},
+    {"index": "tx", "contenttype": "athlete", "attribute": "draft_year"},
+    {"index": "tx", "contenttype": "athlete", "attribute": "college"},
+    {"index": "tx", "contenttype": "athlete", "attribute": "high_school"},
+    {"index": "tx", "contenttype": "athlete", "attribute": "birth_place"},
+    {"index": "tx", "contenttype": "athlete", "attribute": "url"},
+
+    {"index": "birth_place", "contenttype": "athlete", "attribute": "birth_place"},
+    {"index": "birth_year", "contenttype": "athlete", "attribute": "birth_date", "transformers": ["to_year"]},
+    {"index": "college", "contenttype": "athlete", "attribute": "college"},
+    {"index": "draft_year", "contenttype": "athlete", "attribute": "draft_year"},
+    {"index": "high_school", "contenttype": "athlete", "attribute": "high_school"},
+    {"index": "player", "contenttype": "athlete", "attribute": "name"},
+    {"index": "position", "contenttype": "athlete", "attribute": "position"},
+    {"index": "sport", "contenttype": "athlete", "attribute": "sport"},
+    {"index": "team", "contenttype": "athlete", "attribute": "team"},
+    {"index": "type", "attribute": "fuse:type", "contenttype": "athlete", "transformers": ["capitalize"]}
   ]
 }

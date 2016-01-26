@@ -1,14 +1,19 @@
 {
   "types": [
     {
-      "id": "person",
-      "label": "Person",
+      "id": "athlete",
+      "label": "Athlete",
       "attributes": [
         {"name": "name", "type": "str"},
-        {"name": "birth", "type": "date"},
-        {"name": "death", "type": "date"},
+        {"name": "birth_date", "type": "date"},
+        {"name": "sport", "type": "str"},
         {"name": "description", "type": "str"},
-        {"name": "occupation", "type": "str", "multi": true},
+        {"name": "team", "type": "str", "multi": true},
+        {"name": "position", "type": "str", "multi": true},
+        {"name": "draft_year", "type": "str"},
+        {"name": "college", "type": "str", "multi": true},
+        {"name": "high_school", "type": "str", "multi": true},
+        {"name": "birth_place", "type": "str", "multi": true},
         {"name": "url", "type": "str"}
       ]
     }
