@@ -1,6 +1,6 @@
 {
   "components": [
-    {"type": "transformer", "name": "to_year", "component": "customtransformers.to_year"},
+    {"type": "transformer", "name": "to_year", "component": "qc.index.transform.select_year"},
     {"type": "transformer", "name": "capitalize", "component": "qc.index.transform.capitalize"}
   ],
   "defaults": {
