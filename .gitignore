@@ -5,3 +5,4 @@
 /.installed.cfg
 /parts/
 /.vagrant/
+/var/
