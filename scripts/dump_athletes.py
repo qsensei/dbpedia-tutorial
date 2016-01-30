@@ -1,4 +1,5 @@
 import json
+import os
 
 from SPARQLWrapper import SPARQLWrapper, JSON
 
@@ -110,7 +111,8 @@ def iterate_people():
 
 
 def main():
-    with open('var/people.ndjson', 'w') as f:
+    filename = os.environ.get('PEOPLE_NDJSON', 'var/people.ndjson')
+    with open(filename, 'w') as f:
         for person in iterate_people():
             json.dump(person, f)
             f.write('\n')

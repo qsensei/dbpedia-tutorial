@@ -8,7 +8,8 @@ import requests
 
 
 def iterate_people():
-    with open('var/people.ndjson') as f:
+    filename = os.environ.get('PEOPLE_NDJSON', 'var/people.ndjson')
+    with open(filename) as f:
         for line in f:
             yield json.loads(line)
 

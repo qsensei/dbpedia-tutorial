@@ -1,5 +1,6 @@
 import os
 import subprocess
+import tempfile
 import time
 
 import splinter
@@ -74,9 +75,7 @@ class BaseTest(object):
 
 
 class TestUpload(BaseTest):
-    def test_repository_files(self):
-        self.run_script('scripts/dump_athletes.py')
-        self.run_invoke('setup')
+    def assert_sports_populated(self):
         for sport in ('Basketball', 'Baseball', 'Football'):
             self.browser.visit(self.baseurl)
             self.assert_facets_occupied()
@@ -85,3 +84,19 @@ class TestUpload(BaseTest):
             response = self.get_facet_value_frequency('Type', 'Athlete')
             assert response < n_athletes
             self.assert_facets_occupied(ignore={'Sport'})
+
+    def test_setup_from_dl_file(self):
+        self.run_invoke('setup')
+        self.assert_sports_populated()
+
+    def test_fresh_dump(self):
+        _, filename = tempfile.mkstemp()
+        os.environ['PEOPLE_NDJSON'] = filename
+        try:
+            self.run_invoke('setup_fuse')
+            self.run_script('scripts/dump_athletes.py')
+            self.run_script('scripts/upload_athletes.py')
+            self.assert_sports_populated()
+        finally:
+            os.remove(filename)
+            os.environ.pop('PEOPLE_NDJSON')
