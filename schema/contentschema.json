@@ -13,7 +13,7 @@
         {"name": "draft_year", "type": "str"},
         {"name": "college", "type": "str", "multi": true},
         {"name": "high_school", "type": "str", "multi": true},
-        {"name": "birth_place", "type": "str", "multi": true},
+        {"name": "birth_place", "type": "str"},
         {"name": "url", "type": "str"}
       ]
     }

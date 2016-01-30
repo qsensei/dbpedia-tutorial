@@ -13,9 +13,7 @@ import requests
 @task
 def setup(container='dbpedia-tutorial'):
     setup_fuse(container)
-    run('bin/python scripts/upload_football.py')
-    run('bin/python scripts/upload_baseball.py')
-    run('bin/python scripts/upload_basketball.py')
+    run('bin/python scripts/upload_athletes.py')
 
 
 @task

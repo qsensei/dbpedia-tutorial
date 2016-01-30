@@ -8,7 +8,6 @@ import xvfbwrapper
 
 class BaseTest(object):
     def setup(self):
-        self.run_invoke('setup_fuse')
         self.xvfb = xvfbwrapper.Xvfb()
         self.xvfb.start()
         self.browser = splinter.Browser('firefox')
@@ -74,48 +73,8 @@ class BaseTest(object):
             assert self.browser.is_element_present_by_xpath(xpath)
 
 
-class TestScripts(BaseTest):
-    def test_football(self):
-        self.run_script('scripts/upload_football.py')
-        self.browser.visit(self.baseurl)
-        self.assert_facets_occupied()
-        n_athletes = self.get_facet_value_frequency('Type', 'Athlete')
-        # find and click on sport:"Football"
-        self.click_facet_value('Sport', 'Football')
-        # make sure we have at least 100 athletes
-        assert self.get_facet_value_frequency('Type', 'Athlete') == n_athletes
-        self.assert_facets_occupied(ignore={'Sport'})
-
-    def test_baseball(self):
-        self.run_script('scripts/upload_baseball.py')
-        self.browser.visit(self.baseurl)
-        self.assert_facets_occupied()
-        n_athletes = self.get_facet_value_frequency('Type', 'Athlete')
-        # find and click on sport:"Baseball"
-        self.click_facet_value('Sport', 'Baseball')
-        # make sure we have at least 100 athletes
-        assert self.get_facet_value_frequency('Type', 'Athlete') == n_athletes
-        self.assert_facets_occupied(ignore={'Sport'})
-
-    def test_basketball(self):
-        self.run_script('scripts/upload_basketball.py')
-        self.browser.visit(self.baseurl)
-        self.assert_facets_occupied()
-        n_athletes = self.get_facet_value_frequency('Type', 'Athlete')
-        # find and click on sport:"Basketball"
-        self.click_facet_value('Sport', 'Basketball')
-        # make sure we have at least 100 athletes
-        assert self.get_facet_value_frequency('Type', 'Athlete') == n_athletes
-        self.assert_facets_occupied(ignore={'Sport'})
-
-
-class TestSetupTask(BaseTest):
-    def setup(self):
-        self.xvfb = xvfbwrapper.Xvfb()
-        self.xvfb.start()
-        self.browser = splinter.Browser('firefox')
-
-    def test_combination(self):
+class TestUpload(BaseTest):
+    def test_repository_files(self):
         self.run_invoke('setup')
         for sport in ('Basketball', 'Baseball', 'Football'):
             self.browser.visit(self.baseurl)
