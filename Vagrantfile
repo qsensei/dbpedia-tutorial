@@ -67,5 +67,6 @@ Vagrant.configure(2) do |config|
     sudo apt-get install -y firefox xvfb x11-xkb-utils \
       xfonts-100dpi xfonts-75dpi xfonts-scalable xfonts-cyrillic
     sudo bash -c 'curl -sSL https://get.docker.com' | sh
+    sudo usermod -aG docker vagrant
   SHELL
 end
