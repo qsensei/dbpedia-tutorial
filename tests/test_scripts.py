@@ -75,6 +75,7 @@ class BaseTest(object):
 
 class TestUpload(BaseTest):
     def test_repository_files(self):
+        self.run_script('scripts/dump_athletes.py')
         self.run_invoke('setup')
         for sport in ('Basketball', 'Baseball', 'Football'):
             self.browser.visit(self.baseurl)
