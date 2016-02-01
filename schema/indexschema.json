@@ -18,7 +18,6 @@
     {"name": "birth_year"},
     {"name": "birth_place"},
     {"name": "college"},
-    {"name": "location"},
     {"name": "high_school", "label": "High School"},
     {"name": "draft_year", "label": "Draft Year"}
   ],
