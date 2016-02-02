@@ -8,9 +8,11 @@ import requests
 
 SLEEP_INTERVAL = 0.5
 
+
 def print_dot():
     sys.stdout.write(".")
     sys.stdout.flush()
+
 
 def get_server_address():
     """ Try to figure out docker host from DOCKER_HOST.
