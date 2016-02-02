@@ -93,31 +93,44 @@ def query_people(offset=0, limit=100):
     return result['results']['bindings']
 
 
-def iterate_people():
+def get_people():
     limit = 2000
     n_offset = 0
+    people = []
     while True:
         offset = n_offset * limit
         results = query_people(offset=offset, limit=limit)
         if len(results) == 0:
             break
-        for result in results:
-            yield result
+        people.extend(results)
         n_offset += 1
+    return people
 
 
 def iterate_fuse_objects():
-    people = list(iterate_people())
+    """ Generate all Fuse objects from the entire list of people.
+
+    We'll:
+    1. Sort all the rows returned by the URI.
+    2. Group each set of URIs into a single Fuse object.
+    3. yield the last Fuse object when the new URI comes.
+
+    If you are not familiar with Python yield statements, see:
+
+        http://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python
+
+    """
+    people = get_people()
     people.sort(key=lambda x: x['person']['value'])
 
     fuseobj = None
     for athlete in people:
         athlete_uri = athlete['person']['value']
         if fuseobj is None or fuseobj['fuse:id'] != athlete_uri:
-            # if this is the initial iteration or the fuse:id is new, store
+            # if this is the initial iteration or the fuse:id is new, yield
             # the fuseobj and create a new one
             if fuseobj is not None:
-                # set is not JSON serializable - convert list before storing
+                # set is not JSON serializable - convert list before yielding
                 fuseobj['team'] = list(fuseobj['team'])
                 fuseobj['position'] = list(fuseobj['position'])
                 fuseobj['high_school'] = list(fuseobj['high_school'])
@@ -158,6 +171,8 @@ def iterate_fuse_objects():
 
 
 def convert_value(value_obj):
+    """ Convert the SPARQL json object dictionary into a Fuse type.
+    """
     valuetype = value_obj['type']
     value = value_obj['value']
     if valuetype == 'typed-literal':

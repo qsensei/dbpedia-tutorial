@@ -5,13 +5,6 @@ import os
 import requests
 
 
-def iterate_fuse_objects():
-    filename = os.environ.get('PEOPLE_NDJSON', 'var/people.ndjson')
-    with open(filename) as f:
-        for line in f:
-            yield json.loads(line)
-
-
 def get_server_address():
     """ Try to figure out docker host from DOCKER_HOST.
     """
@@ -23,10 +16,17 @@ def get_server_address():
 
 def main():
     server_address = get_server_address()
-    items = list(iterate_fuse_objects())
+
+    items = []
+    filename = os.environ.get('PEOPLE_NDJSON', 'var/people.ndjson')
+    with open(filename) as f:
+        for line in f:
+            items.append(json.loads(line))
+
+    data = {'items': items}
     res = requests.post(
         'http://%s:8000/api/tasks/types/update' % server_address,
-        json={'items': items})
+        json=data)
     res.raise_for_status()
     taskurl = res.headers['location']
     while True:
