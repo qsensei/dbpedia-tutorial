@@ -1,5 +1,6 @@
 import os
 import subprocess
+import tempfile
 import time
 
 import splinter
@@ -8,7 +9,6 @@ import xvfbwrapper
 
 class BaseTest(object):
     def setup(self):
-        self.run_invoke('setup_fuse')
         self.xvfb = xvfbwrapper.Xvfb()
         self.xvfb.start()
         self.browser = splinter.Browser('firefox')
@@ -65,7 +65,7 @@ class BaseTest(object):
     def assert_facets_occupied(self, ignore=None):
         facets = {
             'Team', 'Sport', 'Position', 'Player', 'Birth Year', 'Birth Place',
-            'College', 'Location', 'High School', 'Draft Year'
+            'College', 'High School', 'Draft Year'
         }
         if ignore:
             facets -= ignore
@@ -74,49 +74,8 @@ class BaseTest(object):
             assert self.browser.is_element_present_by_xpath(xpath)
 
 
-class TestScripts(BaseTest):
-    def test_football(self):
-        self.run_script('scripts/upload_football.py')
-        self.browser.visit(self.baseurl)
-        self.assert_facets_occupied()
-        n_athletes = self.get_facet_value_frequency('Type', 'Athlete')
-        # find and click on sport:"Football"
-        self.click_facet_value('Sport', 'Football')
-        # make sure we have at least 100 athletes
-        assert self.get_facet_value_frequency('Type', 'Athlete') == n_athletes
-        self.assert_facets_occupied(ignore={'Sport'})
-
-    def test_baseball(self):
-        self.run_script('scripts/upload_baseball.py')
-        self.browser.visit(self.baseurl)
-        self.assert_facets_occupied()
-        n_athletes = self.get_facet_value_frequency('Type', 'Athlete')
-        # find and click on sport:"Baseball"
-        self.click_facet_value('Sport', 'Baseball')
-        # make sure we have at least 100 athletes
-        assert self.get_facet_value_frequency('Type', 'Athlete') == n_athletes
-        self.assert_facets_occupied(ignore={'Sport'})
-
-    def test_basketball(self):
-        self.run_script('scripts/upload_basketball.py')
-        self.browser.visit(self.baseurl)
-        self.assert_facets_occupied()
-        n_athletes = self.get_facet_value_frequency('Type', 'Athlete')
-        # find and click on sport:"Basketball"
-        self.click_facet_value('Sport', 'Basketball')
-        # make sure we have at least 100 athletes
-        assert self.get_facet_value_frequency('Type', 'Athlete') == n_athletes
-        self.assert_facets_occupied(ignore={'Sport'})
-
-
-class TestSetupTask(BaseTest):
-    def setup(self):
-        self.xvfb = xvfbwrapper.Xvfb()
-        self.xvfb.start()
-        self.browser = splinter.Browser('firefox')
-
-    def test_combination(self):
-        self.run_invoke('setup')
+class TestUpload(BaseTest):
+    def assert_sports_populated(self):
         for sport in ('Basketball', 'Baseball', 'Football'):
             self.browser.visit(self.baseurl)
             self.assert_facets_occupied()
@@ -125,3 +84,19 @@ class TestSetupTask(BaseTest):
             response = self.get_facet_value_frequency('Type', 'Athlete')
             assert response < n_athletes
             self.assert_facets_occupied(ignore={'Sport'})
+
+    def test_setup_from_dl_file(self):
+        self.run_invoke('setup')
+        self.assert_sports_populated()
+
+    def test_fresh_dump(self):
+        _, filename = tempfile.mkstemp()
+        os.environ['PEOPLE_NDJSON'] = filename
+        try:
+            self.run_invoke('setup_fuse')
+            self.run_script('scripts/dump_athletes.py')
+            self.run_script('scripts/upload_athletes.py')
+            self.assert_sports_populated()
+        finally:
+            os.remove(filename)
+            os.environ.pop('PEOPLE_NDJSON')

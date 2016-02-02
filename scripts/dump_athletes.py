@@ -1,20 +1,19 @@
-from urlparse import urlparse
+from collections import defaultdict
+import json
 import os
 import re
 
 from SPARQLWrapper import SPARQLWrapper, JSON
-import requests
 
 
 def query_people(offset=0, limit=100):
-    """ Query for baseball players and their metadata.
-    """
     client = SPARQLWrapper("http://dbpedia.org/sparql")
     client.setQuery('''
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     SELECT DISTINCT
         ?person
+        ?personType
         ?name
         ?description
         ?url
@@ -26,21 +25,34 @@ def query_people(offset=0, limit=100):
         ?highSchoolName as ?high_school
         ?birthPlaceName as ?birth_place
     WHERE {
-      ?person rdf:type dbo:BaseballPlayer ;
-              dbo:team _:team ;
+      ?person rdf:type ?personType ;
+              dbo:team|dbp:team _:team ;
               dbo:position _:position ;
               foaf:name ?name ;
               foaf:isPrimaryTopicOf ?url ;
               rdfs:comment ?description ;
               dbo:birthDate ?birthDate .
+      _:team rdf:type _:teamType .
       FILTER (
         (!regex(?name, "^.+,.+$", "i")) &&
         (LANG(?description) = 'en') &&
         (DATATYPE(?birthDate) = xsd:date) &&
-        (?birthDate >= "1950-01-31"^^xsd:date)
-      )
+        (
+            (
+                (?personType = dbo:BaseballPlayer) &&
+                (_:teamType = yago:MajorLeagueBaseballTeams)
+            ) ||
+            (
+                (?personType = dbo:BasketballPlayer) &&
+                (_:teamType = yago:NationalBasketballAssociationTeams)
+            ) ||
+            (
+                (?personType = dbo:AmericanFootballPlayer) &&
+                (_:teamType = yago:NationalFootballLeagueTeams)
+            )
+        )
+    )
 
-      _:team rdf:type yago:MajorLeagueBaseballTeams .
       _:team rdfs:label ?teamName .
       FILTER (LANG(?teamName) = 'en')
 
@@ -69,39 +81,37 @@ def query_people(offset=0, limit=100):
     } OFFSET %(offset)d LIMIT %(limit)d
     ''' % {'offset': offset, 'limit': limit})
     client.setReturnFormat(JSON)
+
+    print 'grabbing rows %d-%d' % (offset, offset + limit)
+    import datetime
+    start = datetime.datetime.now()
+
     result = client.query().convert()
+
+    dt = datetime.datetime.now() - start
+    print ' ' * 4 + 'took %.1f seconds' % dt.total_seconds()
     return result['results']['bindings']
 
 
-def get_all_people():
-    """ Return all baseball players and their metadata.
-    """
+def iterate_people():
     limit = 2000
     n_offset = 0
-    results = []
     while True:
         offset = n_offset * limit
-        print 'grabbing rows %d-%d' % (offset, offset + limit)
-
-        import datetime
-        start = datetime.datetime.now()
-        new_results = query_people(offset=offset, limit=limit)
-        dt = datetime.datetime.now() - start
-        print ' ' * 4 + 'took %.1f seconds' % dt.total_seconds()
-
-        if len(new_results) == 0:
+        results = query_people(offset=offset, limit=limit)
+        if len(results) == 0:
             break
-        results.extend(new_results)
+        for result in results:
+            yield result
         n_offset += 1
-    return results
 
 
-def convert_for_fuse(results):
-    sort_key = lambda x: x['person']['value']
-    results.sort(key=sort_key)
-    fuseobjs = []
+def iterate_fuse_objects():
+    people = list(iterate_people())
+    people.sort(key=lambda x: x['person']['value'])
+
     fuseobj = None
-    for athlete in results:
+    for athlete in people:
         athlete_uri = athlete['person']['value']
         if fuseobj is None or fuseobj['fuse:id'] != athlete_uri:
             # if this is the initial iteration or the fuse:id is new, store
@@ -112,42 +122,25 @@ def convert_for_fuse(results):
                 fuseobj['position'] = list(fuseobj['position'])
                 fuseobj['high_school'] = list(fuseobj['high_school'])
                 fuseobj['college'] = list(fuseobj['college'])
-                fuseobj['birth_place'] = list(fuseobj['birth_place'])
-                fuseobjs.append(fuseobj)
-            fuseobj = {
-                'fuse:type': 'athlete',
-                'fuse:id': athlete_uri,
-                'sport': 'Baseball',
-                # initialize multi fields as sets to prevent duplicates
-                'team': set(),
-                'position': set(),
-                'high_school': set(),
-                'college': set(),
-                'birth_place': set(),
-            }
-            # OPTIONAL fields in the query aren't always returned. We need to
-            # catch KeyError
-            for key in ('description', 'birth_date', 'draft_year', 'name',
-                        'url'):
+                yield fuseobj
+            fuseobj = defaultdict(set)
+            fuseobj['fuse:type'] = 'athlete'
+            fuseobj['fuse:id'] = athlete_uri
+            dbo = 'http://dbpedia.org/ontology/'
+            fuseobj['sport'] = {
+                dbo + 'BaseballPlayer': 'Baseball',
+                dbo + 'BasketballPlayer': 'Basketball',
+                dbo + 'AmericanFootballPlayer': 'Football',
+            }[convert_value(athlete['personType'])]
+            for key in ('name', 'description', 'birth_date', 'sport',
+                        'draft_year', 'url', 'birth_place'):
                 try:
-                    valuetype = athlete[key]['type']
-                    value = athlete[key]['value']
-                    if valuetype == 'typed-literal':
-                        typ = athlete[key]['datatype']
-                        if typ == 'http://www.w3.org/2001/XMLSchema#integer':
-                            value = int(value)
-                        elif typ == 'http://www.w3.org/2001/XMLSchema#float':
-                            value = float(value)
-                        elif typ == 'http://www.w3.org/2001/XMLSchema#date':
-                            value = {'_date': value}
-                    fuseobj[key] = value
-                except (KeyError, ValueError):
+                    fuseobj[key] = convert_value(athlete[key])
+                except KeyError:
                     pass
-
-        for key in ('position', 'high_school', 'college', 'team',
-                    'birth_place'):
+        for key in ('position', 'high_school', 'college', 'team'):
             try:
-                value = athlete[key]['value']
+                value = convert_value(athlete[key])
             except KeyError:
                 pass
             else:
@@ -162,37 +155,28 @@ def convert_for_fuse(results):
                         '''
                         value = re.sub(exp, '', value, flags=flags).strip()
                 fuseobj[key].add(value)
-    return fuseobjs
 
 
-def get_server_address():
-    """ Try to figure out docker host from DOCKER_HOST.
-    """
-    docker_host = os.environ.get('DOCKER_HOST')
-    if docker_host:
-        return urlparse(docker_host).hostname
-    return 'localhost'
+def convert_value(value_obj):
+    valuetype = value_obj['type']
+    value = value_obj['value']
+    if valuetype == 'typed-literal':
+        typ = value_obj['datatype']
+        if typ == 'http://www.w3.org/2001/XMLSchema#integer':
+            value = int(value)
+        elif typ == 'http://www.w3.org/2001/XMLSchema#float':
+            value = float(value)
+        elif typ == 'http://www.w3.org/2001/XMLSchema#date':
+            value = {'_date': value}
+    return value
 
 
 def main():
-    server_address = get_server_address()
-    results = get_all_people()
-    print 'uploading to Fuse'
-    fuseobjs = convert_for_fuse(results)
-    res = requests.post(
-        'http://%s:8000/api/tasks/types/update' % server_address,
-        json={'items': fuseobjs})
-    res.raise_for_status()
-    taskurl = res.headers['location']
-    while True:
-        res = requests.get(taskurl).json()
-        if res['done']:
-            taskurl = res['index_task']['@id']
-            break
-    while True:
-        res = requests.get(taskurl).json()
-        if res['done']:
-            break
+    filename = os.environ.get('PEOPLE_NDJSON', 'var/people.ndjson')
+    with open(filename, 'w') as f:
+        for person in iterate_fuse_objects():
+            json.dump(person, f)
+            f.write('\n')
 
 
 if __name__ == '__main__':
