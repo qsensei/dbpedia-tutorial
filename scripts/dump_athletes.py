@@ -103,6 +103,8 @@ def get_people(max_limit=None):
         if len(results) == 0:
             break
         people.extend(results)
+        if max_limit and len(people) > max_limit:
+            break
         n_offset += 1
     return people
 
