@@ -65,7 +65,7 @@ class BaseTest(object):
     def assert_facets_occupied(self, ignore=None):
         facets = {
             'Team', 'Sport', 'Position', 'Player', 'Birth Year', 'Birth Place',
-            'College', 'Location', 'High School', 'Draft Year'
+            'College', 'High School', 'Draft Year'
         }
         if ignore:
             facets -= ignore
