@@ -187,11 +187,12 @@ def convert_value(value_obj):
 
 
 def main():
-    filename = os.environ.get('PEOPLE_NDJSON', 'var/people.ndjson')
+    filename = os.environ.get('PEOPLE_JSON', 'var/athletes.json')
+    items = []
+    for person in iterate_fuse_objects():
+        items.append(person)
     with open(filename, 'w') as f:
-        for person in iterate_fuse_objects():
-            json.dump(person, f)
-            f.write('\n')
+        json.dump({'items': items}, f, indent=2)
 
 
 if __name__ == '__main__':
