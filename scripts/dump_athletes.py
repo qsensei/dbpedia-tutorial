@@ -40,24 +40,18 @@ def query_people(offset=0, limit=100):
         (
             (
                 (?personType = dbo:BaseballPlayer) &&
-                (?birthDate >= "1950-01-31"^^xsd:date)
+                (_:teamType = yago:MajorLeagueBaseballTeams)
             ) ||
             (
-                !(?personType = dbo:BaseballPlayer)
+                (?personType = dbo:BasketballPlayer) &&
+                (_:teamType = yago:NationalBasketballAssociationTeams)
+            ) ||
+            (
+                (?personType = dbo:AmericanFootballPlayer) &&
+                (_:teamType = yago:NationalFootballLeagueTeams)
             )
-        ) &&
-
-        (
-            (?personType = dbo:BaseballPlayer) ||
-            (?personType = dbo:BasketballPlayer) ||
-            (?personType = dbo:AmericanFootballPlayer)
-        ) &&
-        (
-            (_:teamType = yago:MajorLeagueBaseballTeams) ||
-            (_:teamType = yago:NationalBasketballAssociationTeams) ||
-            (_:teamType = yago:NationalFootballLeagueTeams)
         )
-      )
+    )
 
       _:team rdfs:label ?teamName .
       FILTER (LANG(?teamName) = 'en')
