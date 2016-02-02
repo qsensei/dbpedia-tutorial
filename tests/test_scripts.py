@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import tempfile
@@ -91,12 +92,15 @@ class TestUpload(BaseTest):
 
     def test_fresh_dump(self):
         _, filename = tempfile.mkstemp()
-        os.environ['PEOPLE_NDJSON'] = filename
+        os.environ['PEOPLE_JSON'] = filename
         try:
             self.run_invoke('setup_fuse')
             self.run_script('scripts/dump_athletes.py')
+            # should be a valid JSON
+            with open(filename) as f:
+                json.load(f)
             self.run_script('scripts/upload_athletes.py')
             self.assert_sports_populated()
         finally:
             os.remove(filename)
-            os.environ.pop('PEOPLE_NDJSON')
+            os.environ.pop('PEOPLE_JSON')
