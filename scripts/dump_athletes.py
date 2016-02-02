@@ -107,22 +107,18 @@ def get_people(max_limit=None):
     return people
 
 
-def iterate_fuse_objects(max_limit=None):
+def get_fuse_objects(max_limit=None):
     """ Generate all Fuse objects from the entire list of people.
 
     We'll:
     1. Sort all the rows returned by the URI.
     2. Group each set of URIs into a single Fuse object.
-    3. yield the last Fuse object when the new URI comes.
-
-    If you are not familiar with Python yield statements, see:
-
-        http://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python
-
+    3. Store the last Fuse object when the new URI comes.
     """
     people = get_people(max_limit=max_limit)
     people.sort(key=lambda x: x['person']['value'])
 
+    fuseobjs = []
     fuseobj = None
     for athlete in people:
         athlete_uri = athlete['person']['value']
@@ -130,12 +126,12 @@ def iterate_fuse_objects(max_limit=None):
             # if this is the initial iteration or the fuse:id is new, yield
             # the fuseobj and create a new one
             if fuseobj is not None:
-                # set is not JSON serializable - convert list before yielding
+                # set is not JSON serializable - convert list before storing
                 fuseobj['team'] = list(fuseobj['team'])
                 fuseobj['position'] = list(fuseobj['position'])
                 fuseobj['high_school'] = list(fuseobj['high_school'])
                 fuseobj['college'] = list(fuseobj['college'])
-                yield fuseobj
+                fuseobjs.append(fuseobj)
             fuseobj = defaultdict(set)
             fuseobj['fuse:type'] = 'athlete'
             fuseobj['fuse:id'] = athlete_uri
@@ -168,6 +164,7 @@ def iterate_fuse_objects(max_limit=None):
                         '''
                         value = re.sub(exp, '', value, flags=flags).strip()
                 fuseobj[key].add(value)
+    return fuseobjs
 
 
 def convert_value(value_obj):
@@ -192,9 +189,7 @@ def main():
     # PEOPLE_JSON specifies a custom athletes file location.
     max_limit = int(os.environ.get('PEOPLE_DUMP_LIMIT'))
     filename = os.environ.get('PEOPLE_JSON', 'var/athletes.json')
-    items = []
-    for person in iterate_fuse_objects(max_limit=max_limit):
-        items.append(person)
+    items = get_fuse_objects(max_limit=max_limit)
     with open(filename, 'w') as f:
         json.dump({'items': items}, f, indent=2)
 
