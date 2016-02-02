@@ -16,6 +16,7 @@ addons:
 before_install:
 - docker login -u '$token' -p "$DOCKER_PASSWORD" -e 'none' docker.qsensei.com
 - docker pull docker.qsensei.com/fuse-free:latest
+install:
 - python bootstrap.py
 - bin/buildout -c buildout-dev.cfg
 script:
