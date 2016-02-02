@@ -9,6 +9,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 SELECT DISTINCT
     ?person
+    ?personType
     ?name
     ?description
     ?url
@@ -20,39 +21,51 @@ SELECT DISTINCT
     ?highSchoolName as ?high_school
     ?birthPlaceName as ?birth_place
 WHERE {
-  ?person rdf:type dbo:AmericanFootballPlayer ;
-          dbo:team _:team ;
+  ?person rdf:type ?personType ;
+          dbo:team|dbp:team _:team ;
+          dbo:position _:position ;
           foaf:name ?name ;
-          foaf:isPrimaryTopicOf ?url .
+          foaf:isPrimaryTopicOf ?url ;
+          rdfs:comment ?description ;
+          dbo:birthDate ?birthDate .
+  _:team rdf:type _:teamType .
+  FILTER (
+    (!regex(?name, "^.+,.+$", "i")) &&
+    (LANG(?description) = 'en') &&
+    (DATATYPE(?birthDate) = xsd:date) &&
+    (
+        (
+            (?personType = dbo:BaseballPlayer) &&
+            (_:teamType = yago:MajorLeagueBaseballTeams)
+        ) ||
+        (
+            (?personType = dbo:BasketballPlayer) &&
+            (_:teamType = yago:NationalBasketballAssociationTeams)
+        ) ||
+        (
+            (?personType = dbo:AmericanFootballPlayer) &&
+            (_:teamType = yago:NationalFootballLeagueTeams)
+        )
+    )
+)
 
-  _:team rdf:type yago:NationalFootballLeagueTeams .
   _:team rdfs:label ?teamName .
   FILTER (LANG(?teamName) = 'en')
 
-  OPTIONAL {
-    ?person rdfs:comment ?description .
-    FILTER (LANG(?description) = 'en')
-  }
-  OPTIONAL {
-    ?person dbo:position _:position .
-    _:position rdfs:label ?positionName .
-    FILTER (LANG(?positionName) = 'en')
-  }
-  OPTIONAL {
-    ?person dbo:birthDate ?birthDate .
-    FILTER (DATATYPE(?birthDate) = xsd:date)
-  }
+  _:position rdfs:label ?positionName .
+  FILTER (LANG(?positionName) = 'en')
+
   OPTIONAL {
     ?person dbo:draftYear ?draftYear .
   }
   OPTIONAL {
-    ?person dbp:college _:college .
-    _:college rdfs:label ?collegeName .
+    ?person dbp:college ?college .
+    ?college rdfs:label ?collegeName .
     FILTER(LANG(?collegeName) = 'en')
   }
   OPTIONAL {
-    ?person dbp:highschool _:highschool .
-    _:highschool rdfs:label ?highSchoolName .
+    ?person dbp:highschool ?highschool .
+    ?highschool rdfs:label ?highSchoolName .
     FILTER(LANG(?highSchoolName) = 'en')
   }
   OPTIONAL {
