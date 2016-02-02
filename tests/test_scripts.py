@@ -93,14 +93,18 @@ class TestUpload(BaseTest):
     def test_fresh_dump(self):
         _, filename = tempfile.mkstemp()
         os.environ['PEOPLE_JSON'] = filename
+        os.environ['PEOPLE_DUMP_LIMIT'] = str(5000)
         try:
             self.run_invoke('setup_fuse')
             self.run_script('scripts/dump_athletes.py')
             # should be a valid JSON
             with open(filename) as f:
-                json.load(f)
+                data = json.load(f)
+                # should dump in chunks of 2000
+                assert len(data['items']) == 6000
             self.run_script('scripts/upload_athletes.py')
             self.assert_sports_populated()
         finally:
             os.remove(filename)
             os.environ.pop('PEOPLE_JSON')
+            os.environ.pop('PEOPLE_DUMP_LIMIT')

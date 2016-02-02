@@ -93,7 +93,7 @@ def query_people(offset=0, limit=100):
     return result['results']['bindings']
 
 
-def get_people():
+def get_people(max_limit=None):
     limit = 2000
     n_offset = 0
     people = []
@@ -107,7 +107,7 @@ def get_people():
     return people
 
 
-def iterate_fuse_objects():
+def iterate_fuse_objects(max_limit=None):
     """ Generate all Fuse objects from the entire list of people.
 
     We'll:
@@ -120,7 +120,7 @@ def iterate_fuse_objects():
         http://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python
 
     """
-    people = get_people()
+    people = get_people(max_limit=max_limit)
     people.sort(key=lambda x: x['person']['value'])
 
     fuseobj = None
@@ -187,9 +187,13 @@ def convert_value(value_obj):
 
 
 def main():
+    # Get some custom variables from the environment (mostly for testing)
+    # PEOPLE_DUMP_LIMIT decides how many people we'll dump to file.
+    # PEOPLE_JSON specifies a custom athletes file location.
+    max_limit = int(os.environ.get('PEOPLE_DUMP_LIMIT'))
     filename = os.environ.get('PEOPLE_JSON', 'var/athletes.json')
     items = []
-    for person in iterate_fuse_objects():
+    for person in iterate_fuse_objects(max_limit=max_limit):
         items.append(person)
     with open(filename, 'w') as f:
         json.dump({'items': items}, f, indent=2)
