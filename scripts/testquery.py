@@ -21,18 +21,18 @@ SELECT DISTINCT
     ?highSchoolName as ?high_school
     ?birthPlaceName as ?birth_place
 WHERE {
-  ?person rdf:type ?personType ;
-          dbo:team|dbp:team _:team ;
-          dbo:position _:position ;
-          foaf:name ?name ;
-          foaf:isPrimaryTopicOf ?url ;
-          rdfs:comment ?description ;
-          dbo:birthDate ?birthDate .
-  _:team rdf:type _:teamType .
-  FILTER (
+    ?person rdf:type ?personType ;
+            dbo:team|dbp:team _:team ;
+            foaf:name ?name ;
+            foaf:isPrimaryTopicOf ?url ;
+            dbo:birthDate ?birthDate .
+    _:team rdf:type _:teamType ;
+            rdfs:label ?teamName .
+
+    FILTER (
     (!regex(?name, "^.+,.+$", "i")) &&
-    (LANG(?description) = 'en') &&
     (DATATYPE(?birthDate) = xsd:date) &&
+    (LANG(?teamName) = 'en') &&
     (
         (
             (?personType = dbo:BaseballPlayer) &&
@@ -47,33 +47,38 @@ WHERE {
             (_:teamType = yago:NationalFootballLeagueTeams)
         )
     )
-)
+    )
 
-  _:team rdfs:label ?teamName .
-  FILTER (LANG(?teamName) = 'en')
 
-  _:position rdfs:label ?positionName .
-  FILTER (LANG(?positionName) = 'en')
+    OPTIONAL {
+    ?person dbo:position _:position .
+    _:position rdfs:label ?positionName .
+    FILTER (LANG(?positionName) = 'en')
+    }
 
-  OPTIONAL {
+    OPTIONAL {
+    ?person rdfs:comment ?description .
+    FILTER (LANG(?description) = 'en')
+    }
+    OPTIONAL {
     ?person dbo:draftYear ?draftYear .
-  }
-  OPTIONAL {
+    }
+    OPTIONAL {
     ?person dbp:college ?college .
     ?college rdfs:label ?collegeName .
     FILTER(LANG(?collegeName) = 'en')
-  }
-  OPTIONAL {
+    }
+    OPTIONAL {
     ?person dbp:highschool ?highschool .
     ?highschool rdfs:label ?highSchoolName .
     FILTER(LANG(?highSchoolName) = 'en')
-  }
-  OPTIONAL {
+    }
+    OPTIONAL {
     ?person dbo:birthPlace _:birthPlace .
     _:birthPlace dbo:country _:birthCountry .
     _:birthCountry rdfs:label ?birthPlaceName .
     FILTER(LANG(?birthPlaceName) = 'en')
-  }
+    }
 } OFFSET 0 LIMIT 3
 ''')
 client.setReturnFormat(JSON)
