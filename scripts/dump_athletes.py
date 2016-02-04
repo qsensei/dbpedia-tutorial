@@ -27,16 +27,16 @@ def query_people(offset=0, limit=100):
     WHERE {
       ?person rdf:type ?personType ;
               dbo:team|dbp:team _:team ;
-              dbo:position _:position ;
               foaf:name ?name ;
               foaf:isPrimaryTopicOf ?url ;
-              rdfs:comment ?description ;
               dbo:birthDate ?birthDate .
-      _:team rdf:type _:teamType .
+      _:team rdf:type _:teamType ;
+             rdfs:label ?teamName .
+
       FILTER (
         (!regex(?name, "^.+,.+$", "i")) &&
-        (LANG(?description) = 'en') &&
         (DATATYPE(?birthDate) = xsd:date) &&
+        (LANG(?teamName) = 'en') &&
         (
             (
                 (?personType = dbo:BaseballPlayer) &&
@@ -51,14 +51,19 @@ def query_people(offset=0, limit=100):
                 (_:teamType = yago:NationalFootballLeagueTeams)
             )
         )
-    )
+      )
 
-      _:team rdfs:label ?teamName .
-      FILTER (LANG(?teamName) = 'en')
 
-      _:position rdfs:label ?positionName .
-      FILTER (LANG(?positionName) = 'en')
+      OPTIONAL {
+        ?person dbo:position _:position .
+        _:position rdfs:label ?positionName .
+        FILTER (LANG(?positionName) = 'en')
+      }
 
+      OPTIONAL {
+        ?person rdfs:comment ?description .
+        FILTER (LANG(?description) = 'en')
+      }
       OPTIONAL {
         ?person dbo:draftYear ?draftYear .
       }
@@ -189,7 +194,9 @@ def main():
     # Get some custom variables from the environment (mostly for testing)
     # PEOPLE_DUMP_LIMIT decides how many people we'll dump to file.
     # PEOPLE_JSON specifies a custom athletes file location.
-    max_limit = int(os.environ.get('PEOPLE_DUMP_LIMIT'))
+    max_limit = os.environ.get('PEOPLE_DUMP_LIMIT')
+    if max_limit:
+        max_limit = int(max_limit)
     filename = os.environ.get('PEOPLE_JSON', 'var/athletes.json')
     items = get_fuse_objects(max_limit=max_limit)
     with open(filename, 'w') as f:
