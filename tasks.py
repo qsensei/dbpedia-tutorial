@@ -158,7 +158,7 @@ def wait_for_container_ready():
 
 def wait_for_ready():
     host = _get_server_host()
-    for _ in xrange(10):
+    for _ in xrange(20):
         res = requests.get(
             'http://%s:8000/api/admin/instance' % host)
         res.raise_for_status()
@@ -170,7 +170,7 @@ def wait_for_ready():
 
 def wait_for_stopped():
     host = _get_server_host()
-    for _ in xrange(10):
+    for _ in xrange(20):
         res = requests.get(
             'http://%s:8000/api/admin/instance' % host)
         res.raise_for_status()
