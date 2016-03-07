@@ -7,19 +7,57 @@ import time
 import zipfile
 
 from invoke import run, task
+import docker
 import requests
 
+app_container = 'dbpedia-tutorial'
+
 
 @task
-def setup(container='dbpedia-tutorial'):
-    setup_fuse(container)
+def setup():
+    if not is_container_created():
+        cmd = 'docker run -dp 8000:8000'
+        cmd += ' --name %s' % app_container
+        cmd += ' docker.qsensei.com/fuse-free'
+        run(cmd)
+    else:
+        print 'Warning: The docker container "%s" is already setup.' % (
+            app_container,)
+        print 'If you did not set this up or you want to start over, run:\n'
+        print '    bin/inv teardown'
+        print '    bin/inv setup\n'
+    if not is_instance_running():
+        try:
+            setup_instance()
+            start_instance()
+        except Exception as e:
+            print 'An error has occurred when trying to start the instance.'
+            print 'Please make sure you have the latest fuse-free image:\n'
+            print '    docker pull docker.qsensei.com/fuse-free\n'
+            print 'Also make sure your repository is up to date:\n'
+            print '    git pull'
+            print '    python bootstrap.py'
+            print '    bin/buildout\n'
+            print 'If either were out of date, please teardown and try setting up again'  # noqa
+            print '    bin/inv teardown'
+            print '    bin/inv setup\n'
+            print e
+            exit(-3)
+    else:
+        print 'Warning: The Fuse instance is already running. We will skip setting it up.'  # noqa
+        print 'If there are issues, try creating a container from scratch:\n'
+        print '    bin/inv teardown'
+        print '    bin/inv setup\n'
     run('bin/python scripts/upload_athletes.py')
+    host = _get_server_host()
+    print 'Setup complete! Visit http://%s:8000 in your browser.\n' % (
+        host,)
 
 
 @task
-def setup_fuse(container='dbpedia-tutorial'):
+def setup_fuse():
     run('docker run -dp 8000:8000 --name %s docker.qsensei.com/fuse-free' % (
-        container))
+        app_container))
     setup_instance()
     start_instance()
 
@@ -30,6 +68,43 @@ def reload_schema():
     setup_instance()
     start_instance()
     reindex()
+
+
+def get_docker_client():
+    kws = docker.utils.kwargs_from_env()
+    try:
+        kws['tls'].assert_hostname = False
+    except KeyError:
+        pass
+    return docker.Client(**kws)
+
+
+def is_container_created():
+    client = get_docker_client()
+
+    msg = 'The docker container "{container}" already has port 8000 bound.\n'
+    msg += 'Please stop before running this script using\n\n'
+    msg += '    docker stop {container}\n'
+    containers = client.containers()
+    for container in containers:
+        ports = container['Ports']
+        for port in ports:
+            if port.get('PublicPort') == 8000:
+                container = container['Names'][0][1:]
+                if container == app_container:
+                    return True
+                print(msg.format(container=container))
+                exit(-1)
+    return False
+
+
+def is_instance_running():
+    host = _get_server_host()
+    try:
+        res = requests.get('http://%s:8000/api/admin/instance' % host)
+        return res.json()['ready']
+    except requests.ConnectionError:
+        return False
 
 
 def setup_instance():
@@ -115,8 +190,8 @@ def reindex():
 
 
 @task
-def teardown(container='dbpedia-tutorial'):
-    run('docker rm -fv %s' % container)
+def teardown():
+    run('docker rm -fv %s' % app_container)
 
 
 def _get_server_host():

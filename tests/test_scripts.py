@@ -108,3 +108,8 @@ class TestUpload(BaseTest):
             os.remove(filename)
             os.environ.pop('PEOPLE_JSON')
             os.environ.pop('PEOPLE_DUMP_LIMIT')
+
+    def test_fuse_already_setup(self):
+        self.run_invoke('setup_fuse')
+        self.run_invoke('setup')
+        self.assert_sports_populated()
